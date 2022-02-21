@@ -1,13 +1,17 @@
 # 2022graphics
 
-Week01-1 OpenGL專案
+# Week01
+第01週的上課內容
 
-Week01-2 WebGL 試試看
+## Week01-1 OpenGL專案
+1.1. CodeBlocks, File-New-Project, 選 OpenGL專案
+1.2. 要記得...對應的目錄
+1.3. 取個專案名
+1.4. Build & Run, 可以看到彩色三角形在轉動
 
-Week01-3 GLUT專案
+## Week01-2 WebGL 試試看
 
-Week01-4 利用 Git 指令, 備份今天上課的內容
-```
+## Week01-3 GLUT專案
 1. moodle下載 freeglut
 2. 解壓縮到 桌面 freeglut
 3. 改檔名 lib\libglut32.a
@@ -15,6 +19,8 @@ Week01-4 利用 Git 指令, 備份今天上課的內容
 5. 專案名
 6. GLUT在桌面的freeglut
 
+## Week01-4 利用 Git 指令, 備份今天上課的內容
+```
 Week01-4 建 GitHub 倉庫
 1. 登入 GitHub
 2. 建 2022graphics 的 repo倉庫
