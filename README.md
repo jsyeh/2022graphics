@@ -4,10 +4,10 @@
 第01週的上課內容
 
 ## Week01-1 OpenGL專案
-1.1. CodeBlocks, File-New-Project, 選 OpenGL專案
-1.2. 要記得...對應的目錄
-1.3. 取個專案名
-1.4. Build & Run, 可以看到彩色三角形在轉動
+1. CodeBlocks, File-New-Project, 選 OpenGL專案
+2. 要記得...對應的目錄
+3. 取個專案名
+4. Build & Run, 可以看到彩色三角形在轉動
 
 ## Week01-2 WebGL 試試看
 
