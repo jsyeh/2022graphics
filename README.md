@@ -4,8 +4,10 @@ Week01-1 OpenGL專案
 
 Week01-2 WebGL 試試看
 
-```
 Week01-3 GLUT專案
+
+Week01-4 利用 Git 指令, 備份今天上課的內容
+```
 1. moodle下載 freeglut
 2. 解壓縮到 桌面 freeglut
 3. 改檔名 lib\libglut32.a
