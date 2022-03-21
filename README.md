@@ -477,3 +477,202 @@ int main( int argc, char**argv )
 }
 
 ```
+
+# Week05
+## step01-1
+先到jsyeh.org的3dcg10目錄中, 下載 windows.zip 及 data.zip, 並把它們放在對應的目錄。接下來執行transform.exe這個課本範例, 試著跑一下程式。.zip
+
+https://jsyeh.org/3dcg10
+ windows.zip => 下載\windows\Transformation.exe
+ data.zip    => 下載\windows\data\一堆模式
+
+右上角換模式
+下方可以 drag glRotatef(角度, x,y,z);
+
+## step01-2 
+老師介紹blog裡有些同學有問題。另外挑了一位同學做範例,講解可以怎麼讓你們blog寫得更精彩,像是用 gist.github.com 來放程式碼,再進行分享等。
+
+## step01-3
+關於旋轉軸 就像買鹹蘇雞的竹籤,我們研究了 0,1,0 的轉動, 研究了 0,-1,0 的轉動,研究了 1,0,0的轉動,也研究了0,0,1的轉動,總之,利用神奇的安培右手,就可以知道東西是怎麼繞軸轉動
+
+## step01-4
+接下來是奇怪的旋轉軸1,1,0,,是有點斜的軸,那它會怎麼轉呢 就像當兵背值星帶斜斜的, 我們用課本的軟體跑了一下,加深大家的印象。
+
+## step02-1
+在實作的部分,我們利用上週的程式最簡單的10行程式碼,裡面有 glPushMatrix()備份矩陣, glPopMatrix()還原矩陣, 裡面再插入glRotatef(180,0,0,1)轉了180度的黃色茶壼
+
+```C++
+#include <GL/glut.h>
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();///備份矩陣
+        glRotatef(180, 0,0,1);///轉180度
+        glColor3f( 1, 1, 0 );
+        glutSolidTeapot( 0.3 );
+    glPopMatrix();///還原矩陣
+    glutSwapBuffers();
+}
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("Week05 Rotate");
+
+    glutDisplayFunc(display);
+    glutMainLoop();
+}
+```
+
+## step02-2 
+接續前一個程式,我們想要有mouse互動,怎麼互動呢 我們利用 glutMotionFunc()把mouse motion對應的函式準備好void motion(int x, int y) 會有mouse在動的時候的座標。修改好angle後,便再呼叫一次display()去照著angle來轉動
+
+```C++
+#include <GL/glut.h>
+float angle=0;
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();///備份矩陣
+        glRotatef(angle, 0,0,1);///轉180度
+        glColor3f( 1, 1, 0 );
+        glutSolidTeapot( 0.3 );
+    glPopMatrix();///還原矩陣
+    glutSwapBuffers();
+}
+void motion(int x, int y)
+{
+    angle = x;
+    display();
+}
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("Week05 Rotate");
+
+    glutDisplayFunc(display);
+    glutMotionFunc(motion);
+    glutMainLoop();
+}
+```
+
+## step02-3
+剛剛的motion()在轉動時,有點不連續,因為它只是讓angle=x做瞬間動作。想要做出比較好的連續動作,需要用到一個冷笑話「把大象放到冰箱裡去」把冰箱門打開、大象放進去、把冰箱門關起來。利用mouse()及motion()函式,配合 angle += x-oldX知道mouse多移動多少
+
+```C++
+#include <GL/glut.h>
+float angle=0, oldX=0;
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();///備份矩陣
+        glRotatef(angle, 0,0,1);///轉180度
+        glColor3f( 1, 1, 0 );
+        glutSolidTeapot( 0.3 );
+    glPopMatrix();///還原矩陣
+    glutSwapBuffers();
+}
+void mouse(int button, int state, int x, int y)
+{///按下mouse、放開mouse
+    oldX = x;
+}
+void motion(int x, int y)
+{///拖著它動
+    angle += (x-oldX);
+    oldX = x;
+    display();
+}
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("Week05 Rotate");
+
+    glutDisplayFunc(display);
+    glutMouseFunc(mouse);
+    glutMotionFunc(motion);
+    glutMainLoop();
+}
+```
+
+# step03-1
+複習上週的 mouse 配合 GL_LINE_LOOP來寫程式,你畫點, N++, 同時更新座標,之後便可以把座標用for迴圈畫出來
+
+```C++
+#include <stdio.h>
+#include <GL/glut.h>
+int N=0;///一開始沒有任何頂點
+int x[1000], y[1000];///最多可以有1000個頂點哦!!
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glBegin(GL_LINE_LOOP);
+    for(int i=0; i<N; i++){///用迴圈,畫N個頂點
+        glVertex2f(  (x[i]-150)/150.0, -(y[i]-150)/150.0 );
+    }              ///減一半、除一半, y要加上負號
+    glEnd();
+    glutSwapBuffers();
+}
+void mouse(int button, int state, int mouseX, int mouseY)
+{
+    if(state==GLUT_DOWN){///如果按下mouse
+        N++;///就多一個頂點
+        x[N-1]=mouseX;///最後一個新增的頂點的x座標
+        y[N-1]=mouseY;///最後一個新增的頂點的y座標
+        printf("現在按下滑鼠,得到新座標 %d %d\n", x[N-1], y[N-1] );
+    }
+    display();
+}
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("Week05 複習 mouse");
+
+    glutDisplayFunc(display);
+    glutMouseFunc(mouse);
+    glutMainLoop();
+}
+```
+
+# step03-2
+剛剛複習完上週匆匆教的「用滑鼠寫程式」,我們現在可以用mouse motion來畫圖,只要把mouse()改成motion()並做對應的修改,可以瞬間變得更細緻
+
+```C++
+#include <stdio.h>
+#include <GL/glut.h>
+int N=0;///一開始沒有任何頂點
+int x[1000], y[1000];///最多可以有1000個頂點哦!!
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glBegin(GL_LINE_LOOP);
+    for(int i=0; i<N; i++){///用迴圈,畫N個頂點
+        glVertex2f(  (x[i]-150)/150.0, -(y[i]-150)/150.0 );
+    }              ///減一半、除一半, y要加上負號
+    glEnd();
+    glutSwapBuffers();
+}
+///void mouse(int button, int state, int mouseX, int mouseY)
+void motion(int mouseX, int mouseY)
+{
+//    if(state==GLUT_DOWN){///如果按下mouse
+        N++;///就多一個頂點
+        x[N-1]=mouseX;///最後一個新增的頂點的x座標
+        y[N-1]=mouseY;///最後一個新增的頂點的y座標
+        printf("現在按下滑鼠,得到新座標 %d %d\n", x[N-1], y[N-1] );
+//    }
+    display();
+}
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("Week05 複習 mouse");
+
+    glutDisplayFunc(display);
+    glutMotionFunc(motion);///glutMouseFunc(mouse);
+    glutMainLoop();
+}
+```
