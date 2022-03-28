@@ -676,3 +676,330 @@ int main(int argc, char** argv)
     glutMainLoop();
 }
 ```
+
+# Week06
+
+電腦圖學之父 Ivan Sutherland (Sketchpad)
+
+看課本範例
+
+jsyeh.org/3dcg10 下載 windows.zip data.zip
+windows.zip => 下載\windows\Transformation.exe
+data.zip    => 下載\windows\data\3D模型
+執行 Transformation.exe
+
+下方可以右鍵 Swap Translate/Rotate
+
+自轉 vs. 公轉
+
+
+
+# step01-3
+
+接下來, 今天的主題是keyboard, 我們利用 GLUT 來寫今天的程式, 能 有keyboard互動, 重點是 glutKeyboardFunc(keyboard) 可以註冊 void keyboard(unsigned char key, int x, int y) 這個函式,再配合 stdio.h 的 printf()印出鍵盤的值.zip
+
+實作時間
+Maya: qwer  
+w:移動 e:轉動 r:縮放  
+0. 安裝 freeglut, lib改一下  
+1. File-New-Project, GLUT  
+   week06_keyboard  
+2. 接下來, 從上週 blog 複製我們的程式來用。  
+
+多了3行程式, 分別是
+
+int main() 裡 glutCreateWindow()之後
+`glutKeyboardFunc(keyboard);`
+
+前面要宣告 `int keyboard(unsigned char key, int x, int y)` 的鍵盤函式
+
+## step01-3
+接下來, 今天的主題是keyboard, 我們利用 GLUT 來寫今天的程式, 能 有keyboard互動, 重點是 glutKeyboardFunc(keyboard) 可以註冊 void keyboard(unsigned char key, int x, int y) 這個函式,再配合 stdio.h 的 printf()印出鍵盤的值
+
+```C++
+///從上週 blog 貼我們的程式
+#include <GL/glut.h>
+#include <stdio.h>
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        glColor3f( 1, 1, 0 );
+        glutSolidTeapot(0.3);
+    glutSwapBuffers();
+}
+void keyboard( unsigned char key, int x, int y )
+{
+    printf("現在按下:%c 座標在:%d %d\n", key, x, y);
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week06 keyboard");
+
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard);
+
+    glutMainLoop();
+}
+```
+
+# step02-1
+接下來我們稍做修改,除了剛剛的keyboard()函式, 我們再加上 mouse() 及 motion()函式, 希望能完整互動
+
+```C++
+#include <GL/glut.h>
+#include <stdio.h>
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        glColor3f( 1, 1, 0 );
+        glutSolidTeapot(0.3);
+    glutSwapBuffers();
+}
+void keyboard( unsigned char key, int x, int y )
+{
+    printf("現在按下:%c 座標在:%d %d\n", key, x, y);
+}
+void mouse( int button, int state, int x, int y )
+{
+}
+void motion( int x, int y )
+{
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week06 keyboard mouse motion");
+
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouse);
+    glutMotionFunc(motion);
+
+    glutMainLoop();
+}
+```
+
+## step02-2
+上上週有教glTranslatef()移動, 我們把它做出來
+
+```C++
+#include <GL/glut.h>
+#include <stdio.h>
+float x=0, y=0, z=0, oldX, oldY;
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();
+        glTranslatef(  (x-150)/150.0  , -(y-150)/150.0  ,  z  ); ///Maya: w
+        ///glRotatef( angle,  0, 0, 1);
+        ///glScalef( scale, scale, scale );
+        glColor3f( 1, 1, 0 );
+        glutSolidTeapot(0.3);
+    glPopMatrix();
+    glutSwapBuffers();
+}
+void keyboard( unsigned char key, int mouseX, int mouseY )
+{
+    printf("現在按下:%c 座標在:%d %d\n", key, mouseX, mouseY);
+}
+void mouse( int button, int state, int mouseX, int mouseY )
+{
+    oldX = mouseX; oldY = mouseY;
+}
+void motion( int mouseX, int mouseY )
+{
+    x += (mouseX-oldX);
+    y += (mouseY-oldY);
+    oldX = mouseX; oldY = mouseY;
+    display();
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week06 keyboard mouse motion");
+
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouse);
+    glutMotionFunc(motion);
+
+    glutMainLoop();
+}
+```
+
+
+## step02-3
+接下來我們實作出「縮放」的程式,利用 float scale=1.0 這個變數,如果 if(mousX大於oldX)就讓 scale 放大 1%, 反過來就讓 scale 變小 1%, 我們就可以完成這個縮放的版本
+
+```C++
+#include <GL/glut.h>
+#include <stdio.h>
+float x=0, y=0, z=0, scale=1.0, oldX, oldY;
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();
+        //glTranslatef(  (x-150)/150.0  , -(y-150)/150.0  ,  z  ); ///Maya: w
+        ///glRotatef( angle,  0, 0, 1);
+        glScalef( scale, scale, scale ); ///Maya: r
+        glColor3f( 1, 1, 0 );
+        glutSolidTeapot(0.3);
+    glPopMatrix();
+    glutSwapBuffers();
+}
+void keyboard( unsigned char key, int mouseX, int mouseY )
+{
+    printf("現在按下:%c 座標在:%d %d\n", key, mouseX, mouseY);
+}
+void mouse( int button, int state, int mouseX, int mouseY )
+{
+    oldX = mouseX; oldY = mouseY;
+}
+void motion( int mouseX, int mouseY )
+{
+    if( mouseX>oldX ) scale = scale * 1.01;
+    if( mouseX<oldX ) scale = scale * 0.99;
+    //x += (mouseX-oldX);
+    //y += (mouseY-oldY);
+    oldX = mouseX; oldY = mouseY;
+    display();
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week06 keyboard mouse motion");
+
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouse);
+    glutMotionFunc(motion);
+
+    glutMainLoop();
+}
+```
+
+## step03-1
+
+今天的主角是keyboard鍵盤函式, 我們 if(key=='w' 或 key=='W') now=1做移動, if(key=='r' 或 key=='R')now=3 做縮放。接下來在 motion()裡, if(now==1)做移動的計算, if(now==3)做縮放的計算, 這樣就可以又移動、又縮放了 
+
+```C++
+#include <GL/glut.h>
+#include <stdio.h>
+float x=150, y=150, z=0, scale=1.0, angle=0.0, oldX, oldY;
+int now=1;///1:移動, 2:旋轉, 3:縮放
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();
+        glTranslatef( (x-150)/150.0 , -(y-150)/150.0 , z ); ///Maya: w
+        //glRotatef( angle,  0, 0, 1); ///Maya: e
+        glScalef( scale, scale, scale ); ///Maya: r
+        glColor3f( 1, 1, 0 );
+        glutSolidTeapot(0.3);
+    glPopMatrix();
+    glutSwapBuffers();
+}
+void keyboard( unsigned char key, int mouseX, int mouseY )
+{   //printf("現在按下:%c 座標在:%d %d\n", key, mouseX, mouseY);
+    if(key=='w' || key=='W') now=1;///移動 (小心不要中文)
+    //if(key=='e' || key=='E') now=2;///旋轉
+    if(key=='r' || key=='R') now=3;///縮放
+}
+void mouse( int button, int state, int mouseX, int mouseY )
+{
+    oldX = mouseX; oldY = mouseY;
+}
+void motion( int mouseX, int mouseY )
+{
+    if(now==1){///移動
+        x += (mouseX-oldX);
+        y += (mouseY-oldY);
+    }else if(now==3){///縮放
+        if( mouseX>oldX ) scale = scale * 1.01;
+        if( mouseX<oldX ) scale = scale * 0.99;
+    }
+    oldX = mouseX; oldY = mouseY;
+    display();
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week06 keyboard mouse motion");
+
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouse);
+    glutMotionFunc(motion);
+
+    glutMainLoop();
+}
+```
+
+## step03-2
+
+今天最後的任務,是加上旋轉。所以用keyboard的 w,e,r 來切換移動、旋轉、縮放。motion()裡面也有對應的程式, display()也會照著進行 glTranslatef() glRotatef() glScalef() 的程式。我們還多學了 glutInitWindowSize(500,500)放大, 導致 glTranslatef()裡面減一半、除一半的地方有修改。.zip
+
+```C++
+#include <GL/glut.h>
+#include <stdio.h>
+float x=250, y=250, z=0, scale=1.0, angle=0.0, oldX, oldY;
+int now=1;///1:移動, 2:旋轉, 3:縮放
+void display()
+{
+    glClearColor(0.5, 0.5, 0.5, 1);///用來 Clear的色彩 R,G,B,A Alpha沒用到
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();
+        glTranslatef( (x-250)/250.0 , -(y-250)/250.0 , z ); ///Maya: w
+        glRotatef( angle,  0, 0, 1); ///Maya: e
+        glScalef( scale, scale, scale ); ///Maya: r
+        glColor3f( 1, 1, 0 );
+        glutSolidTeapot(0.3);
+    glPopMatrix();
+    glutSwapBuffers();
+}
+void keyboard( unsigned char key, int mouseX, int mouseY )
+{   //printf("現在按下:%c 座標在:%d %d\n", key, mouseX, mouseY);
+    if(key=='w' || key=='W') now=1;///移動 (小心不要中文)
+    if(key=='e' || key=='E') now=2;///旋轉
+    if(key=='r' || key=='R') now=3;///縮放
+}
+void mouse( int button, int state, int mouseX, int mouseY )
+{
+    oldX = mouseX; oldY = mouseY;
+}
+void motion( int mouseX, int mouseY )
+{
+    if(now==1){///移動
+        x += (mouseX-oldX);
+        y += (mouseY-oldY);
+    }else if(now==2){///旋轉
+        angle += (mouseX-oldX);
+    }else if(now==3){///縮放
+        if( mouseX>oldX ) scale = scale * 1.01;
+        if( mouseX<oldX ) scale = scale * 0.99;
+    }
+    oldX = mouseX; oldY = mouseY;
+    display();
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutInitWindowSize(500, 500);
+    glutCreateWindow("week06 keyboard mouse motion");
+
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouse);
+    glutMotionFunc(motion);
+
+    glutMainLoop();
+}
+```
+
