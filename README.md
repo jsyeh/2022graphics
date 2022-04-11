@@ -1003,3 +1003,195 @@ int main(int argc, char**argv)
 }
 ```
 
+# week08
+
+Week08 Light
+
+
+
+## step01-1
+今天主題是 Lighting 打光, 在 jsyeh.org的 3dcg10 下載 data.zip 及 windows.zip 然後跑我們的 Light & Material.exe 範例 ,
+1. jsyeh.org/3dcg10 下載
+2. windows.zip => 下載\windows\Light & Material.exe
+3. data.zip    => 下載\windows\data\ 一堆3D模型
+4. (左下角可切換 material)
+5. (左上角可切換 3D Model)
+
+## step01-2
+改變光的位置 (光的陣列)
+
+## step01-3
+接下來我們想在程式中,把打光的效果做出來。將 freeglut裝好、libglut32.a準備好, File-New-Project選GLUT專案, week08_light 專案, 把程式碼先用 Notepad++備份起來, 裡面與 light相關的程式有(1)打光的陣列、(2)打光的函式
+
+寫寫看程式
+1. 先把 freeglut 裝好,  lib\libglut32.a 準備好
+2. File-New-Project, GLUT專案
+3. 偷程式碼!!!!
+
+```c++
+const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
+const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
+
+const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
+const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
+const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat high_shininess[] = { 100.0f };
+```
+
+```c++
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+    glEnable(GL_LIGHT0);
+    glEnable(GL_NORMALIZE);
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_LIGHTING);
+
+    glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
+    glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+```
+
+## step01-4
+接下來我們要把(0) 先放好10行GLUT程式, (1) 打光的陣列 放前面, (2) 打光的函式 放在 glutMainLoop()之前
+
+```c++
+///(1) 先貼上我們上週的簡單的10行程式 GLUT
+///(2) 在前面宣告打光的陣列
+///(3) 在 glutMainLoop() 之前,貼上打光的函式
+#include <GL/glut.h>
+const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
+const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
+
+const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
+const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
+const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat high_shininess[] = { 100.0f };
+
+void display()
+{
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+        glutSolidTeapot( 0.3 );
+    glutSwapBuffers();
+}
+
+int main( int argc, char**argv )
+{
+    glutInit( &argc, argv );
+    glutInitDisplayMode( GLUT_DOUBLE | GLUT_DEPTH );
+    glutCreateWindow("week08 light");
+
+    glutDisplayFunc(display);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+    glEnable(GL_LIGHT0);
+    glEnable(GL_NORMALIZE);
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_LIGHTING);
+
+    glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
+    glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+
+    glutMainLoop();
+}
+```
+
+
+
+## step02-1
+前一節課的光線好像不是太正確,我們調整一下光的位置,把z的值加個負號,便可以看到茶壼好像打光打得漂亮了。也再加上黃色,變成黃色茶壼
+
+```c++
+#include <GL/glut.h>
+const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
+const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat light_position[] = { 2.0f, 5.0f, -5.0f, 0.0f };//加個負號
+
+const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
+const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
+const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat high_shininess[] = { 100.0f };
+
+void display()
+{
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+        glColor3f( 1, 1, 0 ); //黃色的茶壼
+        glutSolidTeapot( 0.3 );
+    glutSwapBuffers();
+}
+```
+
+## step02-2
+介紹 glutCreateWindow()之前, 進行 Init ... 初始化, glutCreateWindow()之後, 就能執行OpenGL指令, 最後就用 glutMainLoop()來卡住, 讓程式持續進行,不會結束。
+
+```c++
+int main( int argc, char**argv )
+{
+    // Init ... 初始化
+
+    glutCreateWindow("week08 light");
+
+    // 可以執行 OpenGL 指令
+
+    glutMainLoop();
+}
+```
+
+## step02-3
+介紹打光與Normal法向量的關係,接下來簡單介紹3D模型檔裡面的幾個重點, 以 obj 檔為例, 裡面有 v 代表頂點Vertex, vn 代表法向量Norma, vt代表 TexCoord貼圖座標l
+
+## step03-1
+老師介紹3D模型檔裡面的 v, vt, vn 及 f 各別代表的意思。我們的期中考題就出來了, 可以在 jsyeh.org 的 gl 目錄裡, 試試看你可以考幾分
+
+## step03-2
+今天臨時多了一個主題, 是如何畫出3D模型, 我們參考課本範例 jsyeh.org 的 3dcg10 裡面的 source.zip 裡面的 glm.h 與 glm.c 改檔名成 glm.cpp 加到專案中, 再加入 include glm.h 及對應的宣告函式等,最後便可以畫圖。請小心 working 工作目錄
+
+```c++
+#include <GL/glut.h>
+#include "glm.h"
+GLMmodel * pmodel=NULL;
+void drawmodel(void)
+{
+    if (!pmodel) {
+	pmodel = glmReadOBJ("al.obj");
+	if (!pmodel) exit(0);
+	glmUnitize(pmodel);
+	glmFacetNormals(pmodel);
+	glmVertexNormals(pmodel, 90.0);
+    }
+
+    glmDraw(pmodel, GLM_SMOOTH);
+}
+//...
+```
+
+```c++
+void display()
+{
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+        glColor3f( 1, 1, 0 );
+        //glutSolidTeapot( 0.3 );
+        drawmodel();
+    glutSwapBuffers();
+}
+```
