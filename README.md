@@ -1195,3 +1195,170 @@ void display()
     glutSwapBuffers();
 }
 ```
+
+
+# Week09
+貼圖
+
+1. 期中考
+2. 主題: 貼圖
+3. 實作: OpenCV
+4. 實作: OpenGL貼圖設定
+5. 實作: 貼圖座標
+
+## step01-0
+期中考試,考 OpenGL必背的10個函式11行, 老師利用模擬考軟體 jsyeh.org 的 gl 目錄, 示範給大家看。接著用 Moodle考試。
+
+```c++
+glPushMatrix();//備份矩陣
+    glTranslatef(x,y,z);//移動
+    glRotatef(angle,x,y,z);//轉動
+    glScalef(x,y,z);//縮放
+    glBegin(GL_POLYGON);//開始畫
+        glColor3f(r,g,b);//色彩
+        glTexCoord2f(tx,ty);//貼圖座標
+        glNormal3f(nx,ny,nz);//打光的法向量
+        glVertex2f(x,y);//頂點
+    glEnd();//結束畫
+glPopMatrix();//還原矩陣
+```
+
+
+## step01-1 跑課本範例
+今天的上課主題是貼圖, 老師請大家到 jsyeh.org 的 3dcg10 目錄中, 下載windows.zip, data.zip, source.zip 檔, 解壓縮好、將 data 資料夾放對後, 便可以執行 Texture.exe 範例, 重點在大家看到了期中考的貼圖那題, 對應的程式碼是 glTexCoord2f(tx,ty); 對應貼圖座標的意思
+
+1. 請到 jsyeh.org/3dcg10 下載今天的範例 
+2. windows.zip -> 下載\windows\Texture.exe
+3. data.zip    -> 下載\windows\data\很多圖檔
+
+請執行 Texture.exe 了解貼圖的關鍵函式
+glTexCoord2f(tx,ty) 的使用方式, 在 Blog寫下來
+
+## step01-2 OpenCV
+1. Moodle上課用軟體/Teams第09週 下載 OpenCV 2.1.0 (舊版,又小、最簡單好用、互通)
+2. 安裝要小心!!! 有一步 PATH 要設定 (Add PATH
+3. 用預設安裝 C:\OpenCV2.1 一定要在這裡
+
+
+## step01-2 OpenCV
+1. Moodle上課用軟體/Teams第09週 下載 OpenCV 2.1.0 (舊版,又小、最簡單好用、互通)
+2. 安裝要小心!!! 有一步 PATH 要設定 (Add PATH) 代表你之後的程式執行時,可成功使用 OpenCV C:\OpenCV2.1\bin 裡面的 dll 檔
+3. 用預設安裝 C:\OpenCV2.1 一定要在這裡
+4. 小秘密 PATH 會設好!!!
+
+## step02-1 第一個 OpenCV程式!!!
+
+## step01-2 OpenCV
+1. Moodle上課用軟體/Teams第09週 下載 OpenCV 2.1.0 (舊版,又小、最簡單好用、互通)
+2. 安裝要小心!!! 有一步 PATH 要設定 (Add PATH) 代表你之後的程式執行時,可成功使用 OpenCV C:\OpenCV2.1\bin 裡面的 dll 檔
+3. 用預設安裝 C:\OpenCV2.1 一定要在這裡
+4. 小秘密 PATH 會設好!!!
+
+## step02-1 第一個 OpenCV程式!!!
+今天的挑戰,是安裝好 OpenCV 2.1 時設好 PATH後, 重開 CodeBlocks, 再寫程式。程式很簡單, 設定很複雜。程式碼裡面 include opencv的highgui.h , 對應的設定是 Setting-Compiler Setting 的 Search directories 的 compiler 要有 c的opencv2.1的include, 程式碼裡讀圖秀圖, 還有對應的咒語
+
+0. (安裝好 OpenCV) 重開 CodeBlocks 
+1. 程式很簡單, 設定很複雜
+2. File-New-EmptyFile, 存成 week09_opencv.cpp 程式很簡單
+3. 設定很複雜: Setting-Compiler Setting 裡面 3個地方
+4. (1) Search directories 的 Compiler 要 Add C:\OpenCV2.1\include
+5. (2) Search directories 的 Linker 要 Add C:\OpenCV2.1\lib
+6. (3) 設定很複雜: Setting-Compiler Setting 裡面 Linker setting 咒語: cv210 cxcore210 highgui210
+
+
+```c++
+#include <opencv/highgui.h>
+int main()
+{ /// Ipl 是 Intel performance library 的縮寫
+
+	IplImage * img = cvLoadImage("檔名.png"); //讀圖
+	cvShowImage("week09", img); //秀圖
+	cvWaitKey(0); //等任意鍵繼續
+
+}
+```
+
+
+## step02-2
+
+老師解釋大家常見問題, 並逐一回答。像是圖檔的副檔名有錯(記得開檔案總管-檢視-副檔名)、像是咒語寫錯, 可以看 View-Log 下方的 Build Log 會講清楚錯在哪裡
+
+## step03-1
+
+step03-1_接下來,我們要把 OpenCV 及 OpenGL 的程式碼結合。結合的方式比較暴力,就直接在 glutMainLoop()之前, 呼叫我們的 myTexture()函式,而這個函式,會去讀入 earth.jpg 地球的地圖, 放在奇怪的目錄, 桌面的freeglut的 bin目錄裡面。這有點歷史遺毒的位置, 之後會介紹原因。
+
+```c++
+///請自己去你的blog裡貼出你的10行程式!!
+#include <GL/glut.h>
+#include <opencv/highgui.h>
+void myTexture()
+{
+    IplImage * img = cvLoadImage("earth.jpg");///去找地圖!!
+    cvShowImage("img", img ); ///在 img視窗,放 img的圖
+    cvWaitKey( 0 );///等任意鍵繼續
+	//等一下這段會被改掉
+}
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glutSolidTeapot( 0.3 );
+    glutSwapBuffers();
+}
+int main(int argc, char**argv)
+{
+    glutInit( &argc, argv );
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week09 texture");
+
+    glutDisplayFunc(display);
+    myTexture();
+
+    glutMainLoop();
+}
+```
+
+## step03-2
+最後要真的把 OpenCV讀的圖檔,與 OpenGL的貼圖整合, 我們寫 myTexture()函式, 裡面同時有 OpenCV 及 OpenGL的對應函式, 完成這個任務, 讓茶壼能貼上貼圖。
+
+```c++
+#include <opencv/highgui.h> ///使用 OpenCV 2.1 比較簡單, 只要用 High GUI 即可
+#include <opencv/cv.h>
+#include <GL/glut.h>
+int myTexture(char * filename)
+{
+    IplImage * img = cvLoadImage(filename); ///OpenCV讀圖
+    cvCvtColor(img,img, CV_BGR2RGB); ///OpenCV轉色彩 (需要cv.h)
+    glEnable(GL_TEXTURE_2D); ///1. 開啟貼圖功能
+    GLuint id; ///準備一個 unsigned int 整數, 叫 貼圖ID
+    glGenTextures(1, &id); /// 產生Generate 貼圖ID
+    glBindTexture(GL_TEXTURE_2D, id); ///綁定bind 貼圖ID
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖T, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖S, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); /// 貼圖參數, 放大時的內插, 用最近點
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); /// 貼圖參數, 縮小時的內插, 用最近點
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img->width, img->height, 0, GL_RGB, GL_UNSIGNED_BYTE, img->imageData);
+	return id;
+}
+```
+
+再把 int main() 裡面的 myTexture() 加上呼叫要用的函式
+
+```c++
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glutSolidTeapot( 0.3 );
+    glutSwapBuffers();
+}
+int main(int argc, char**argv)
+{
+    glutInit( &argc, argv );
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week09 texture");
+
+    glutDisplayFunc(display);
+    myTexture("earth.jpg");
+
+    glutMainLoop();
+}
+```
