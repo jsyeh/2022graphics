@@ -1247,14 +1247,6 @@ glTexCoord2f(tx,ty) 的使用方式, 在 Blog寫下來
 4. 小秘密 PATH 會設好!!!
 
 ## step02-1 第一個 OpenCV程式!!!
-
-## step01-2 OpenCV
-1. Moodle上課用軟體/Teams第09週 下載 OpenCV 2.1.0 (舊版,又小、最簡單好用、互通)
-2. 安裝要小心!!! 有一步 PATH 要設定 (Add PATH) 代表你之後的程式執行時,可成功使用 OpenCV C:\OpenCV2.1\bin 裡面的 dll 檔
-3. 用預設安裝 C:\OpenCV2.1 一定要在這裡
-4. 小秘密 PATH 會設好!!!
-
-## step02-1 第一個 OpenCV程式!!!
 今天的挑戰,是安裝好 OpenCV 2.1 時設好 PATH後, 重開 CodeBlocks, 再寫程式。程式很簡單, 設定很複雜。程式碼裡面 include opencv的highgui.h , 對應的設定是 Setting-Compiler Setting 的 Search directories 的 compiler 要有 c的opencv2.1的include, 程式碼裡讀圖秀圖, 還有對應的咒語
 
 0. (安裝好 OpenCV) 重開 CodeBlocks 
