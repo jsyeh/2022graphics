@@ -1354,3 +1354,229 @@ int main(int argc, char**argv)
     glutMainLoop();
 }
 ```
+
+# Week10
+
+電腦圖學 Week09 2022-04-25
+
+1. 討論: 期中考成績、校長的信/累/快篩/缺貨/APP/降價
+2. 主題: 上週貼圖+貼到四邊形=背景
+3. 主題: 上週貼圖+貼到圓球=會轉的地球
+4. 主題: 上週貼圖+貼到模型=鋼彈模型
+
+step01-0_上課前,講解期中考試的成績、校長的信、快篩相關資訊
+
+## step01-1 先做好設定
+這節課的主題,是要將上週的貼圖+貼到四邊形,成為背景,所以先安裝 freeglut 及 OpenCV, 再把 myTexture.txt 的程式先貼進程式碼
+1. (在教室)安裝 freeglut (lib/libglut32.a)
+2. (在教室)安裝 OpenCV 2.1.0 vs2008 setup (Add PATH)
+3. (重開 CodeBlocks) File-New-Project, GLUT專案
+4. 把上週的 myTexture.txt 裡面有 myTexture() 做好設定
+5. OpenCV 設定: Setting-Compiler, search directories, Compiler加 C:\OpenCV2.1\include
+6. OpenCV 設定: Setting-Compiler, search directories, Linker加 C:\OpenCV2.1\lib
+7. OpenCV 設定: Setting-Compiler, Linker settings, 咒語 cv210 cxcore210 highgui210
+
+```cpp
+#include <opencv/highgui.h> ///使用 OpenCV 2.1 比較簡單, 只要用 High GUI 即可
+#include <opencv/cv.h>
+#include <GL/glut.h>
+int myTexture(char * filename)
+{
+    IplImage * img = cvLoadImage(filename); ///OpenCV讀圖
+    cvCvtColor(img,img, CV_BGR2RGB); ///OpenCV轉色彩 (需要cv.h)
+    glEnable(GL_TEXTURE_2D); ///1. 開啟貼圖功能
+    GLuint id; ///準備一個 unsigned int 整數, 叫 貼圖ID
+    glGenTextures(1, &id); /// 產生Generate 貼圖ID
+    glBindTexture(GL_TEXTURE_2D, id); ///綁定bind 貼圖ID
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖T, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖S, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); /// 貼圖參數, 放大時的內插, 用最近點
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); /// 貼圖參數, 縮小時的內插, 用最近點
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img->width, img->height, 0, GL_RGB, GL_UNSIGNED_BYTE, img->imageData);
+    return id;
+}
+```
+
+## step01-2
+接下來將 OpenCV 的設定設好,包括2個目錄、3段咒語, 程式碼除了 myTexture.txt 的程式外, 再貼上10行的程式。最後, 在 working_dir 工作目錄中 (目前是桌面的freeglut的bin裡) , 放好你的圖,便能看到上週的進度,也就是茶壼表面有地球的貼圖.zip
+
+1. 做好 OpenCV設定, 把我們的專案, 加上 10行程式
+2. 配合 工作目錄 working_dir (現在在你的桌面的freeglut的bin裡) 裡面放圖檔!!!
+3. 在 main() 裡面, 把 myTexture("圖檔"); 放好。小心副檔名不要錯了。
+
+```cpp
+int main(int argc,char**argv)
+{
+    glutInit(&argc,argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week10 texture background");
+
+    glutDisplayFunc(display);
+    myTexture("earth.jpg");
+
+    glutMainLoop();
+}
+```
+
+## step01-3
+step01-3_這節課的目標,是要把貼圖+貼到四邊形, 變成背景。所以如果 step01-2 可以看到茶壼表面有貼圖, 便可以開始 glBegin(GL_POLYGON) 開始畫, glTexCoord2f(tx,ty) 及 glVertex2f(x,y) 重覆4次,表示四邊形竹旳4個頂點及對應的貼圖座標,最後 glEnd() 結束畫。其中的貼圖座標有點難理解。你要了解Windows 圖左上角0,0
+
+1. 加上 glBegin(GL_POLYGON);
+2. 加上 glTexCoord2f( tx, ty );   glVertex2f( x, y ); 寫4次
+3. 加上 glEnd();
+
+```cpp
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    ///glutSolidTeapot(0.3);
+    glBegin(GL_POLYGON);
+    ///圖片的0,0在左上角
+        glTexCoord2f( 0, 1 ); glVertex2f( -1, -1 );
+        glTexCoord2f( 1, 1 ); glVertex2f( +1, -1 );
+        glTexCoord2f( 1, 0 ); glVertex2f( +1, +1 );
+        glTexCoord2f( 0, 0 ); glVertex2f( -1, +1 );
+    glEnd();
+    glutSwapBuffers();
+}
+```
+
+## step02-1
+想要貼到圓球上。BUT圓球的座標不太會用: cos(), sin() 圓球座標系統。
+可以用 OpenGL User 函式來做到
+
+step02-1_有貼圖能力, 想把貼到圓球,變成地球。程式碼有難度,先宣告一個 gluQuadric指標 sphere=NULL; 在 main() 的 glutMainLoop()之前 sphere=gluNewQuadric(); 新增一個二次曲面, 接下來 display()可用 gluQuadricTexture(sphere, 1); 建貼圖 gluSphere(sphere,1,30,30);
+
+1. OpenGL 的函式, ex. glVertex3f()
+2. OpenGL Utilities (GLU) 的函式, ex. gluSphere()
+3. OpenGL User Tookit (GLUT) 的函式, ex. glutSolidTeapot()
+
+開始寫程式吧!!!!
+1. File-New-Project, GLUT專案, 存成 week10_texture_earth
+2. 宣告指標`GLUquadric * sphere=NULL;` 有個指標,要給gluSphere()用
+3. 在 main()裡, 將指標設好 `sphere = gluNewQuadric();`
+4. 在 display()裡, 加入 `gluQuadricTexture(sphere, 1);`
+5. 在 display()裡, 再加入 `gluSpher(sphere, 1, 30, 30);`
+
+解釋一下 gluSphere()
+1. `gluSphere( sphere, 半徑, 柳丁切經, 層層切緯);`
+2. 老師都用 `gluSphere(sphere, 1, 30, 30);` 反正切一樣細就好
+
+
+## step02-2
+step02-2_最後我們把地球轉正囉!! 利用期中考考過的 glPushMatrix()及glPopMatrix()裡面多一行 glRotatef(角度,1,0,0)就可以了。記得 glutMainLoop()之前,要glEnable(GL_DEPTH_TEST)開啟3D深度測試的功能,才會正確畫出3D的前後關係
+
+```cpp
+//前面省略
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();//step02-2
+        glRotatef(90, 1,0,0);//step02-2
+        gluQuadricTexture(sphere, 1);
+        gluSphere(sphere, 1, 30, 30);///glutSolidTeapot(0.3);
+    glPopMatrix();//step02-2
+    glutSwapBuffers();
+}
+int main(int argc,char**argv)
+{
+    glutInit(&argc,argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week10 texture background");
+
+    glutDisplayFunc(display);
+    myTexture("earth.jpg");
+    sphere = gluNewQuadric();
+    glEnable(GL_DEPTH_TEST);//step02-2
+
+    glutMainLoop();
+}
+```
+
+## step03-1
+讓地球可以轉動起來。我們利用 float angle=0; 有個變數會決定轉動的角度,一開始是0度。在display()的最後一行 angle++ 或 angle += 0.1 每次要多轉動多少。 glRotatef(angle, 0,-1,0) 會對著-Y軸轉動。最後 main()裡面要有glutIdleFunc(display)
+
+```cpp
+///全刪,拿剛剛的程式來用!!!
+#include <opencv/highgui.h> ///使用 OpenCV 2.1 比較簡單, 只要用 High GUI 即可
+#include <opencv/cv.h>
+#include <GL/glut.h>
+GLUquadric * sphere = NULL;///一個指到二次曲面的指標
+int myTexture(char * filename)
+{
+    IplImage * img = cvLoadImage(filename); ///OpenCV讀圖
+    cvCvtColor(img,img, CV_BGR2RGB); ///OpenCV轉色彩 (需要cv.h)
+    glEnable(GL_TEXTURE_2D); ///1. 開啟貼圖功能
+    GLuint id; ///準備一個 unsigned int 整數, 叫 貼圖ID
+    glGenTextures(1, &id); /// 產生Generate 貼圖ID
+    glBindTexture(GL_TEXTURE_2D, id); ///綁定bind 貼圖ID
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖T, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖S, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); /// 貼圖參數, 放大時的內插, 用最近點
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); /// 貼圖參數, 縮小時的內插, 用最近點
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img->width, img->height, 0, GL_RGB, GL_UNSIGNED_BYTE, img->imageData);
+    return id;
+}
+float angle=0;
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();
+        glRotatef(angle, 0,-1,0);
+        glRotatef(90, 1,0,0);
+        gluQuadricTexture(sphere, 1);
+        gluSphere(sphere, 1, 30, 30);///glutSolidTeapot(0.3);
+    glPopMatrix();
+    glutSwapBuffers();
+    angle++;
+}
+int main(int argc,char**argv)
+{
+    glutInit(&argc,argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week10 texture background");
+
+    glutIdleFunc(display);
+    glutDisplayFunc(display);
+    myTexture("earth.jpg");
+    sphere = gluNewQuadric();
+    glEnable(GL_DEPTH_TEST);
+
+    glutMainLoop();
+}
+```
+
+## step03-2
+把模型讀進來: 結合前一個實作的「會旋轉的地球」的程式碼, 再使用week08教過的程式碼,配合對應的貼圖即可。
+
+1. File-New-Project, GLUT專案, week10_texture_model
+2. 模型放哪裡? 工作執行的目錄 ex. (in C:\Users\...\Desktop\freeglut\bin) 把老師的 myGundam.zip 的 data目錄,放進去
+3. 加入我們的程式, glm.h glm.c(改成glm.cpp) 放在你的專案 week10_texture_model 裡 下載自 jsyeh.org/3dcg10 的 source.zip 的 glm.h glm.c (改成 glm.cpp)
+4. 把 glm.cpp 加到專案裡Add Files...
+5. 把 week08 的程式貼過來
+6. 把 myTexture("earth.jpg") 改成 myTexture("data/Diffuse.jpg")
+
+```cpp
+//前面 include glm.h, 宣告模型的指標
+#include "glm.h"
+GLMmodel * pmodel = NULL;
+```
+
+```cpp
+//中間讀入模型
+    glPushMatrix();
+        glRotatef(angle, 0,1,0);
+        if( pmodel == NULL ){
+            pmodel = glmReadOBJ("data/Gundam.obj");
+            glmUnitize( pmodel );
+            glmFacetNormals( pmodel );
+            glmVertexNormals( pmodel, 90 );
+        }
+        glmDraw( pmodel, GLM_MATERIAL | GLM_TEXTURE);
+    glPopMatrix();
+```
+
+```cpp
+//記得在 main() 裡面將貼圖讀進來
+    myTexture("data/Diffuse.jpg");
+```
