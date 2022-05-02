@@ -1580,3 +1580,183 @@ GLMmodel * pmodel = NULL;
 //記得在 main() 裡面將貼圖讀進來
     myTexture("data/Diffuse.jpg");
 ```
+
+# Week11
+
+## step01-1
+
+1. 安裝 freeglut (1) libglut32.a (2) freeglut\bin
+2. 安裝 OpenCV 2.1 (上週) 小心! Add PATH (其實就是 .dll 檔案)
+3. (要重開)File-New-Project, GLUT專案 week11_gundam
+4. 下載 jsyeh.org/3dcg10 的 source.zip 裡面 glm.h glm.c
+5. 把 glm.h glm.cpp 放到 week11_gundam 專案 目錄 (main.cpp的鄰居)
+6. myGundam.zip 的模型裡的 data\模型檔,放到 工作 目錄 freeglut\bin
+
+講解意思:
+1. compiler include .h 目錄
+2. linker lib .lib 目錄
+3. linker 咒語 要加入的檔案 一堆 .lib 檔
+而 bin 裡的 .dll 檔案,是在 "工作執行目錄"
+
+## step01-2
+寫程式,先複習第09週的程式(貼圖)
+1. 貼上你的程式
+2. 配上你的咒語,只要寫一次就好
+3. 咒語 Setting-Compiler-Search directories: Compiler include 目錄 C:\OpenCV2.1\include
+4. 咒語 Setting-Compiler-Search directories: Linker lib 目錄 C:\OpenCV2.1\lib
+5. 咒語 Setting-Compiler-Linker: cv210 cxcore210 highgui210
+6. 執行可成功, 代表: (1) OpenCV的咒語設對了, (2) PATH 也對了, (3) 你的 gundam 的 data 也對了
+
+```cpp
+///當上面是彩色的,表示現在是可執行
+///左邊的Projects裡的 week11_gundam 按右鍵 Add Files
+#include <opencv/highgui.h>
+int main()
+{
+	IplImage * img = cvLoadImage("data/Diffuse.jpg");
+	cvShowImage("week11", img);
+	cvWaitKey(0);//等任意鍵繼續
+}
+```
+
+## step02-1
+接續前面的專案,將 myTexture加到前面, 將 10行GLUT程式加到後面, 配上呼叫 myTexture(圖檔) 便可以看到 teapot 穿上 Diffuse的貼圖
+
+1. 把 myTexture 放到程式的前面
+2. 把 10行 GLUT 程式放進去
+3. 在 main() 的 glutMainLoop()之前 myTexture("data/Diffuse.jpg");
+4. 我們就可看到 teapot穿上 gundam 的 Diffuse貼圖
+
+
+```cpp
+#include <opencv/highgui.h> ///使用 OpenCV 2.1 比較簡單, 只要用 High GUI 即可
+#include <opencv/cv.h>
+#include <GL/glut.h>
+int myTexture(char * filename)
+{
+    IplImage * img = cvLoadImage(filename); ///OpenCV讀圖
+    cvCvtColor(img,img, CV_BGR2RGB); ///OpenCV轉色彩 (需要cv.h)
+    glEnable(GL_TEXTURE_2D); ///1. 開啟貼圖功能
+    GLuint id; ///準備一個 unsigned int 整數, 叫 貼圖ID
+    glGenTextures(1, &id); /// 產生Generate 貼圖ID
+    glBindTexture(GL_TEXTURE_2D, id); ///綁定bind 貼圖ID
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖T, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖S, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); /// 貼圖參數, 放大時的內插, 用最近點
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); /// 貼圖參數, 縮小時的內插, 用最近點
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img->width, img->height, 0, GL_RGB, GL_UNSIGNED_BYTE, img->imageData);
+	return id;
+}  
+```
+
+## step02-2
+step02-2_接續前一個案案,接下來是要將 glm 模型相關的程式拿來用。最後可以看到 Gundam模型哦!
+
+把 glm 模型相關的程式 貼出來
+1. `#include "glm.h" //使用同目錄中的 glm.h 外掛`
+2. `GLMmodel * pmodel = NULL;`
+3. display()裡面, 要有畫模型的程式
+
+```cpp
+#include "glm.h"
+GLMmodel * pmodel = NULL;
+```
+
+在 display()裡面
+```cpp
+void display()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	if( pmodel == NULL ){///程式放這裡
+		pmodel = glmReadOBJ( "data/gundam.obj" ); ///讀入模型
+		glmUnitize( pmodel ); ///把模型pmodel 調整成單位大小 -1...+1
+		glmFacetNormals( pmodel ); ///把Facet面的法向量Normals算出來
+		glmVertexNormals( pmodel , 90 ); ///把 Vertex的法向量,用面平均算出來,超過90度就分開
+	}
+	glmDraw(pmodel, GLM_TEXTURE);
+	glutSwapBuffers();
+}
+```
+
+## step02-3
+剛剛看到3D模型,很開心。細看之後, 發現模型的貼圖好像上下倒過來了。所以 data目錄中的 Diffuse.jpg 圖檔需要「上下垂直翻轉」。
+
+而且看起來,好像模型被壓扁了, 我們需要開啟 3D的功能!!
+
+1. 利用小畫家,把 freeglut\bin\data\Diffuse.jpg 開起來, 上下「垂直翻轉」
+2. 在 glutMainLoop()之前(可以讀圖,可以myTexture(), 可以打光, 可以做很多設定) 加 glEnable(GL_DEPTH_TEST); 開啟 3D深度測試功能,讓近的會蓋掉遠的,便是真3D
+3. 我們想讓3D模型轉起來 glPushMatrix() ... glPopMatrix() 的中間,加上 glRotatef(angle, 0,1,0); 配上 angle+=1
+4. 最後,加入 glutIdleFunc( display ) 有空就重畫畫面
+
+```cpp
+#include <opencv/highgui.h> ///使用 OpenCV 2.1 比較簡單, 只要用 High GUI 即可
+#include <opencv/cv.h>
+#include <GL/glut.h>
+#include "glm.h"
+GLMmodel * pmodel = NULL;
+int myTexture(char * filename)
+{
+    IplImage * img = cvLoadImage(filename); ///OpenCV讀圖
+    cvCvtColor(img,img, CV_BGR2RGB); ///OpenCV轉色彩 (需要cv.h)
+    glEnable(GL_TEXTURE_2D); ///1. 開啟貼圖功能
+    GLuint id; ///準備一個 unsigned int 整數, 叫 貼圖ID
+    glGenTextures(1, &id); /// 產生Generate 貼圖ID
+    glBindTexture(GL_TEXTURE_2D, id); ///綁定bind 貼圖ID
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖T, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖S, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); /// 貼圖參數, 放大時的內插, 用最近點
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); /// 貼圖參數, 縮小時的內插, 用最近點
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img->width, img->height, 0, GL_RGB, GL_UNSIGNED_BYTE, img->imageData);
+	return id;
+}
+float angle=0;
+void display()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	if( pmodel == NULL ){///程式放這裡
+		pmodel = glmReadOBJ( "data/hand1.obj" ); ///讀入模型
+		glmUnitize( pmodel ); ///把模型pmodel 調整成單位大小 -1...+1
+		glmFacetNormals( pmodel ); ///把Facet面的法向量Normals算出來
+		glmVertexNormals( pmodel , 90 ); ///把 Vertex的法向量,用面平均算出來,超過90度就分開
+	}
+
+	glPushMatrix();
+        glRotatef(angle, 0,0,1);
+        glScalef(2,2,2);
+        glmDraw(pmodel, GLM_TEXTURE);
+    glPopMatrix();
+	glutSwapBuffers();
+	angle+=1;
+}
+int main(int argc, char**argv)
+{
+    glutInit( &argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week11 gundam");
+
+    glutDisplayFunc(display);
+    glutIdleFunc(display);
+    myTexture("data/Diffuse.jpg");
+    glEnable(GL_DEPTH_TEST);
+
+    glutMainLoop();
+}
+```
+
+## step03-0
+老師講些故事, 鼓勵大家多練習、把握學習的機會。
+- 蘇文鈺老師 [教真的，如果師父不狠心一點，徒弟是學不會的。](https://www.facebook.com/arwen.su.5/posts/2344128725740718)
+
+## step03-1
+
+利用Autodesk Maya 來切割3D模型、匯出 OBJ模型檔。老師介紹老師拍的影片給大家參考
+- https://www.youtube.com/watch?v=D4a7cNFF9kQ
+	- 如何使用 Maya 匯出 3D模型檔(OBJ) 觀看次數：11,717次
+	
+## step03-2
+本來老師想要示範 T-R-T 的程式, 不過後來發現快下課了, 時間不夠,就下週再教
+
+## step03-3
+最後老師再示範「如何利用Git指令,將今天的程式上傳」其中比較重要的,如果電腦之前有 git clone 過,就可以不用再做這一步, 只要記得在目錄中 git pull 把雲端先拉下來同步。另外如果 git config 做過, 也可以不用做。只要檔案修改後, git pull, git add ., git commit -m, 最後 git push 即可
