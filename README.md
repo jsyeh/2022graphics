@@ -1760,3 +1760,112 @@ int main(int argc, char**argv)
 
 ## step03-3
 最後老師再示範「如何利用Git指令,將今天的程式上傳」其中比較重要的,如果電腦之前有 git clone 過,就可以不用再做這一步, 只要記得在目錄中 git pull 把雲端先拉下來同步。另外如果 git config 做過, 也可以不用做。只要檔案修改後, git pull, git add ., git commit -m, 最後 git push 即可
+
+
+# Week12
+
+## step01-1
+看課本 Transformation.exe 裡面有: 移動、旋轉
+step01-1_下載課本範例, 解壓縮, 執行 Transformation.exe 經由 Swap T R 來看它們的差別
+
+1. jsyeh.org/3dcg10 下載 windows.zip data.zip
+2. 解壓縮 下載\windows\Transformation.exe
+3. 解壓縮 下載\windows\data\模型
+4. 跑 Transformation.exe (要頻繁切換 Swap T R)
+
+看起來像是放在右邊有個在轉動的車子
+```cpp
+glTranslatef( 0.8, 0.0, 0.0);//在右邊
+glRotatef( angle, 0, 1, 0);//轉動
+//有一台藍色的車子
+```
+
+好像車子在繞著中心點轉彎
+```cpp
+glRotatef( angle, 0, 1, 0);
+glTranslatef( 0.8, 0.0, ,0.0);
+//有一台藍色的車子
+```
+
+## step01-2
+講解差別, 如何理解(用框框來解釋程式碼。越畫越大)
+step01-2_老師用框框,從小到大,慢慢增加程式碼,方便大家理解程式碼怎麼看、怎麼理解
+
+1. 老師將 Transformation.exe 範例執行後, 開始框程式碼
+2. 最裡面的小框框
+
+## step01-3
+用老師的程式來理解
+step01-3_利用老師的網頁小範例,讓大家看到,程式碼會影響到它下面的整個程式碼
+
+1. https://120.125.80.50/GL (有期中考題、有小考考題)
+2. OpenGL T-R-T函式: 對特定軸轉動練習
+3. 滑鼠點擊 To Draw 後, 可以在左邊圈出一個形狀
+4. 滑鼠點擊 angle 後, 再按空白鍵,可以讓 angle 值一直變動
+5. 滑鼠點擊程式碼的方框後, 可以 drag 改變程式碼的位置
+6. 滑鼠點擊 glTranslatef()程式的方框後,可在左邊drag改變東西的位置
+
+## step02-1
+step02-1_利用網頁中的圖,配合第一節課教的畫框框,從小到大,一步步了解T-R-T的操作
+
+
+## step02-2
+寫程式來理解
+
+0. freeglut要裝好
+1. File-New-Project, GLUT專案 week12_TRT
+2. 用簡單的10行程式,配合 T-R-T函式
+
+```cpp
+#include <GL/glut.h>
+float angle=0;
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glColor3f(1,1,1);///白色的
+    glutSolidTeapot( 0.3 );///大茶壼
+    glPushMatrix();
+        glTranslatef(0.3, 0, 0);///把下面旋轉中的東西 "掛在" 某處
+        glRotatef( angle, 0,0,1 );///旋轉
+        glTranslatef(0.2, 0, 0);///往右下移動(把把手移到中心)
+        glColor3f(1,0,0);///紅色的
+        glutSolidTeapot( 0.2 );///茶壼
+    glPopMatrix();
+    glutSwapBuffers();
+    angle+=0.1;
+}
+```
+
+## step03-1
+step03-1_與作業T-R-T相關的程式, 改寫成 TRT TRT 專案,看到很關節的轉動
+
+1. File-New-Project, GLUT專案 week12_TRT_TRT
+2. 把剛剛的程式拿來, 再變複雜
+
+
+```cpp
+#include <GL/glut.h>
+float angle=0;
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glColor3f(1,1,1);///白色的
+    glutSolidTeapot( 0.3 );///大茶壼
+    glPushMatrix();
+        glTranslatef(0.3, 0, 0);///把下面旋轉中的東西 "掛在" 某處
+        glRotatef( angle, 0,0,1 );///旋轉
+        glTranslatef(0.2, 0, 0);///往右下移動(把把手移到中心)
+        glColor3f(1,0,0);///紅色的
+        glutSolidTeapot( 0.2 );///茶壼
+        glPushMatrix();
+            glTranslatef(0.2, 0, 0);///把下面旋轉中的東西 "掛在" 某處
+            glRotatef( angle, 0,0,1 );///旋轉
+            glTranslatef(0.2, 0, 0);///往右下移動(把把手移到中心)
+            glColor3f(1,0,0);///紅色的
+            glutSolidTeapot( 0.2 );///茶壼
+        glPopMatrix();
+    glPopMatrix();
+    glutSwapBuffers();
+    angle+=0.03;
+}
+```
