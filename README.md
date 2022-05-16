@@ -1869,3 +1869,332 @@ void display()
     angle+=0.03;
 }
 ```
+
+# Week13
+
+電腦圖學 Week13 2022-05-16
+1. 示範複習作業/考試的 TRT(實際例子)
+2. TRT 的R角度
+3. 利用 keyboard/mouse 來改變
+4. 如何轉正模型、如何調整模型大小
+
+```cpp
+glPushMatrix();
+	glTranslatef( x, y, z);
+	glRotatef(angle, 0, 0, 1);//z軸
+	glTranslatef( x2, y2, z2);
+	//畫我們的手臂 用方塊 glRectf()
+glPopMatrix();
+```
+
+## step01-1 
+step01-1_第一節課想要讓大家用另一種方法練習TRT,所以要更簡化程式。我們先使用glRectf(x1,y1, x2,y2) 來畫出簡單的四邊形
+
+用簡單的方塊,來做做看(考試相關)
+1. File-New-Project, GLUT專案 week13_rect_TRT
+2. 貼入10行程式, 加上 glRectf()
+```cpp
+///week13_rect_TRT
+#include <GL/glut.h>
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glRectf(0.5, 0.5, -0.5, -0.5);
+    glutSwapBuffers();
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutInitWindowSize(600,600);
+    glutCreateWindow("week13 rect TRT");
+
+    glutDisplayFunc(display);///不放Idle
+    glutMainLoop();
+}
+```
+
+## step01-2
+step01-2_先準備好TRT的程式碼,把白色的身體、紅色的手臂都畫出來。等一下要教大家如何調到正確的技巧
+
+1. 接剛剛的程式 把T-R-T 套上去
+2. 還不知道要放多少的數值,就///先註解掉
+
+```cpp
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glColor3f(1,1,1);///白色的
+    glRectf(0.5, 0.5, -0.5, -0.5);///身體
+    glPushMatrix();
+        ///glTranslatef( x, y, z);///等下要掛在0.5,0.5
+        ///glRotatef(angle, 0, 0, 1);//z軸
+        ///glTranslatef( x2, y2, z2);///????
+        glColor3f(1,0,0);///紅色的
+        glRectf(0.5, 0.5, 1.0, 0.3);///手臂
+    glPopMatrix();
+
+    glutSwapBuffers();
+}
+```
+
+## step01-3
+
+接下來的步驟,是先把TRT最下面的移動,把手臂的旋轉中心,放到畫面的世界中心。第二步,再把旋轉做出來。比如說float angle=45; 便轉動45度。
+
+```cpp
+float angle=45;
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glColor3f(1,1,1);///白色的
+    glRectf(0.5, 0.5, -0.5, -0.5);///身體
+    glPushMatrix();
+        ///glTranslatef( x, y, z);///等下要掛在0.5,0.5
+        glRotatef(angle, 0, 0, 1);///(2) 旋轉
+        glTranslatef( -0.5, -0.4, 0);///(1)先把旋轉中心放正中心
+        glColor3f(1,0,0);///紅色的
+        glRectf(0.5, 0.5, 1.0, 0.3);///手臂
+    glPopMatrix();
+
+    glutSwapBuffers();
+}
+```
+
+## step02-1
+剛剛 week13_rect_TRT要做最後收尾。把第三步(3)把會旋轉的手臂掛上去 0.5, 0.5 的位置, 其z的值是0,是因為剛好就在z=0的那個平面。接下來希望手臂可以利用mouse motion來揮動, 所以加上mouse() 及 motion() 函式, 並在 main()裡 設定好這兩個函式。有一行之前沒教過 glutPostRedisplay()會請GLUT重畫畫面
+
+註: 在做動畫時, 通常動畫師做出的人體會2手張開, 擺成 T pose。人體站直, z在0的位置。
+
+```cpp
+///week13_rect_TRT
+#include <GL/glut.h>
+float angle=45, oldX=0;
+void mouse(int button, int state, int x, int y){///mouse按下去
+    oldX = x;
+}
+void motion(int x, int y){
+    angle += (x-oldX);
+    oldX = x;
+    glutPostRedisplay();
+}
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glColor3f(1,1,1);///白色的
+    glRectf(0.5, 0.5, -0.5, -0.5);///身體
+    glPushMatrix();
+        glTranslatef( 0.5, 0.5, 0);///(3) 等下要掛在0.5,0.5
+        glRotatef(angle, 0, 0, 1);///(2) 旋轉
+        glTranslatef( -0.5, -0.4, 0);///(1)先把旋轉中心放正中心
+        glColor3f(1,0,0);///紅色的
+        glRectf(0.5, 0.5, 1.0, 0.3);///手臂
+    glPopMatrix();
+
+    glutSwapBuffers();
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    ///glutInitWindowSize(600,600);
+    glutCreateWindow("week13 rect TRT");
+    glutMouseFunc(mouse);
+    glutMotionFunc(motion);
+    glutDisplayFunc(display);///不放Idle
+    glutMainLoop();
+}
+```
+
+
+## step02-2
+step02-2_接下來要畫下手肘。不過因為剛剛的程式有點太胖,所以重新開始,新開GLUT專案,存檔 week13_rect_TRT_TRT, 裡面程式和之前很像,但是稍微瘦身、改一下位置,以便畫出綠色的下手肘。
+
+1. File-New-Project, GLUT專案 week13_rect_TRT_TRT
+2. 類似剛剛的程式, 不過老師修一下
+3. 先把 float angle=0;角度變0從頭做
+4. 把下手臂也順利放上去
+
+```cpp
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glColor3f(1,1,1);///白色的
+    glRectf(0.3, 0.5, -0.3, -0.2);///身體,瘦身
+    glPushMatrix();  ///掛的位置也改了
+        glTranslatef( 0.3, 0.5, 0);///(3) 等下要掛在0.5,0.5
+        ///glRotatef(angle, 0, 0, 1);///(2) 旋轉
+        glTranslatef( -0.3, -0.4, 0);///(1)先把旋轉中心放正中心
+        glColor3f(1,0,0);///紅色的
+        glRectf(0.3, 0.5, 0.8, 0.3);///上手臂
+    glPopMatrix();
+
+    glutSwapBuffers();
+}
+```
+
+## step02-3
+程式要結案了。我們把下手臂畫出來, 再從下到上, 把TRT也逐一做出來。其中比較特別的是, 我們把 angle值交給一個人畫,目前是下手臂,所以上手臂暫時就不轉動。
+
+```cpp
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glColor3f(1,1,1);///白色的
+    glRectf(0.3, 0.5, -0.3, -0.2);///身體,瘦身
+    glPushMatrix();  ///掛的位置也改了
+        glTranslatef( 0.3, 0.5, 0);///(3) 等下要掛在0.5,0.5
+        ///glRotatef(angle, 0, 0, 1);///(2) 旋轉
+        glTranslatef( -0.3, -0.4, 0);///(1)先把旋轉中心放正中心
+        glColor3f(1,0,0);///紅色的
+        glRectf(0.3, 0.5, 0.8, 0.3);///上手臂
+        glPushMatrix();
+            glTranslatef(0.8, 0.4, 0); ///(3) 把下手肘掛在關節上
+            glRotatef( angle, 0, 0, 1); ///(2) 旋轉
+            glTranslatef(-0.8, -0.4, 0 );///(1) 把下手肘的旋轉中心,放正中心
+            glColor3f(0,1,0);///綠色的
+            glRectf(0.8, 0.5, 1.1, 0.3);///再畫下手肘
+        glPopMatrix();
+    glPopMatrix();
+
+    glutSwapBuffers();
+}
+```
+
+
+## step03-1
+
+```cpp
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glColor3f(1,1,1);///白色的
+    glRectf(0.3, 0.5, -0.3, -0.2);///身體,瘦身
+
+    glPushMatrix();  ///右半邊
+        glTranslatef( 0.3, 0.5, 0);///(3) 等下要掛在0.5,0.5
+        glRotatef(angle, 0, 0, 1);///(2) 旋轉
+        glTranslatef( -0.3, -0.4, 0);///(1)先把旋轉中心放正中心
+        glColor3f(1,0,0);///紅色的
+        glRectf(0.3, 0.5, 0.8, 0.3);///右上手臂
+        glPushMatrix();
+            glTranslatef(0.8, 0.4, 0); ///(3) 把下手肘掛在關節上
+            glRotatef( angle, 0, 0, 1); ///(2) 旋轉
+            glTranslatef(-0.8, -0.4, 0 );///(1) 把下手肘的旋轉中心,放正中心
+            glColor3f(0,1,0);///綠色的
+            glRectf(0.8, 0.5, 1.1, 0.3);///再畫右下手肘
+        glPopMatrix();
+    glPopMatrix();
+
+    glPushMatrix();  ///左半邊
+        glTranslatef( -0.3, 0.5, 0);///(3) 等下要掛在0.5,0.5
+        glRotatef(angle, 0, 0, 1);///(2) 旋轉
+        glTranslatef( +0.3, -0.4, 0);///(1)先把旋轉中心放正中心
+        glColor3f(1,0,0);///紅色的
+        glRectf(-0.3, 0.5, -0.8, 0.3);///左上手臂
+        glPushMatrix();
+            glTranslatef(-0.8, 0.4, 0); ///(3) 把下手肘掛在關節上
+            glRotatef( angle, 0, 0, 1); ///(2) 旋轉
+            glTranslatef(+0.8, -0.4, 0 );///(1) 把下手肘的旋轉中心,放正中心
+            glColor3f(0,1,0);///綠色的
+            glRectf(-0.8, 0.5, -1.1, 0.3);///再畫左下手肘
+        glPopMatrix();
+    glPopMatrix();
+
+    glutSwapBuffers();
+}
+```
+## step03-2
+可以利用 keyboard (來指定要轉動的)關節
+
+step03-2_現在應該要有4個關節才對,但是float angle=0; 只有一個關節能用。所以我們用陣列來解決。float angle[20]; 準備20個關節, 把 disiplay()裡的 angle 依序變成 angle[0] ... angle[3], 再準備 void keyboard() 裡面 if(key=='0') angleID=0; if(key=='1')angleID=1; motion()也改裡面的 angle[angleID]=(x-oldX);
+
+記得 main() 裡面要加 glutKeyboardFunc(keyboard)
+
+
+關節的角度要分開。
+```
+float angle=0; 只有一個關節, 改成下面的陣列
+float angle[20]; 就有20個關節!!!
+```
+
+之後, 要把 angle 都改成 angle[???]
+
+```
+angle[angleID] 其實是 
+angleID=0  angle[0]
+angleID=1  angle[1]
+angleID=2  angle[2]
+```
+
+```cpp
+///week13_rect_many_TRT
+#include <GL/glut.h>
+float angle[20], oldX=0;
+int angleID=0;///0:第0個關節, 1:第1個關節, 2:第2個關節
+void keyboard( unsigned char key, int x, int y){
+    if( key=='0' ) angleID=0;///預設是這一個
+    if( key=='1' ) angleID=1;
+    if( key=='2' ) angleID=2;
+    if( key=='3' ) angleID=3;
+}///用keyboard的按鍵,來決定等一下 motion()裡要改的 angle[i] 是哪一個
+void mouse(int button, int state, int x, int y){///mouse按下去
+    oldX = x;
+}
+void motion(int x, int y){
+    angle[angleID] += (x-oldX);
+    oldX = x;
+    glutPostRedisplay();
+}
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glColor3f(1,1,1);///白色的
+    glRectf(0.3, 0.5, -0.3, -0.2);///身體,瘦身
+
+    glPushMatrix();  ///右半邊
+        glTranslatef( 0.3, 0.5, 0);///(3) 等下要掛在0.5,0.5
+        glRotatef( angle[0], 0, 0, 1);///(2) 旋轉
+        glTranslatef( -0.3, -0.4, 0);///(1)先把旋轉中心放正中心
+        glColor3f(1,0,0);///紅色的
+        glRectf(0.3, 0.5, 0.8, 0.3);///右上手臂
+        glPushMatrix();
+            glTranslatef(0.8, 0.4, 0); ///(3) 把下手肘掛在關節上
+            glRotatef( angle[1], 0, 0, 1); ///(2) 旋轉
+            glTranslatef(-0.8, -0.4, 0 );///(1) 把下手肘的旋轉中心,放正中心
+            glColor3f(0,1,0);///綠色的
+            glRectf(0.8, 0.5, 1.1, 0.3);///再畫右下手肘
+        glPopMatrix();
+    glPopMatrix();
+
+    glPushMatrix();  ///左半邊
+        glTranslatef( -0.3, 0.5, 0);///(3) 等下要掛在0.5,0.5
+        glRotatef( angle[2], 0, 0, 1);///(2) 旋轉
+        glTranslatef( +0.3, -0.4, 0);///(1)先把旋轉中心放正中心
+        glColor3f(1,0,0);///紅色的
+        glRectf(-0.3, 0.5, -0.8, 0.3);///左上手臂
+        glPushMatrix();
+            glTranslatef(-0.8, 0.4, 0); ///(3) 把下手肘掛在關節上
+            glRotatef( angle[3], 0, 0, 1); ///(2) 旋轉
+            glTranslatef(+0.8, -0.4, 0 );///(1) 把下手肘的旋轉中心,放正中心
+            glColor3f(0,1,0);///綠色的
+            glRectf(-0.8, 0.5, -1.1, 0.3);///再畫左下手肘
+        glPopMatrix();
+    glPopMatrix();
+
+    glutSwapBuffers();
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    ///glutInitWindowSize(600,600);
+    glutCreateWindow("week13 rect TRT");
+
+    glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouse);
+    glutMotionFunc(motion);
+    glutDisplayFunc(display);///不放Idle
+    glutMainLoop();
+}
+```
