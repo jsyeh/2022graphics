@@ -2198,3 +2198,197 @@ int main(int argc, char**argv)
     glutMainLoop();
 }
 ```
+
+# Week14
+
+## step01-1
+step01-1_練習寫檔(fopen(), fprintf(), fclose())
+
+練習寫檔
+1. 開啟檔案 `fopen()` 要先有指標 `FILE * fout = fopen("file.txt", "w+");`
+2. 印出來、寫出來 printf() 改裝 fprintf()
+3. 關閉檔案 `fclose(fin)`
+
+```cpp
+///Week14-1.cpp step01-1
+///練習開檔、寫檔、關檔
+#include <stdio.h>
+int main()
+{
+    FILE * fout = fopen("file.txt", "w+");
+
+     printf("Hello World\n");
+    fprintf(fout, "Hello World\n");
+
+    fclose(fout);
+}
+```
+
+## step01-2
+step01-2_加再上練習讀檔fscanf()
+
+練習開檔、寫檔write、關檔
++ 練習開檔、讀檔read、關檔
+
+```cpp
+///Week14-2.cpp step01-2
+///練習開檔、寫檔write、關檔
+///練習開檔、讀檔read、關檔
+#include <stdio.h>
+int main()
+{
+    FILE * fout = fopen("file2.txt", "w+");
+    fprintf(fout, "angle1 %d\n", 999);
+    fclose(fout);
+
+    char line[200];
+    int a;
+    FILE * fin = fopen("file2.txt", "r");
+    fscanf(fin, "%s %d", line, &a);
+    printf("讀到了字串:%s 及整數%d\n", line, a);
+    fclose(fin);
+}
+```
+
+## step01-3
+
+step01-3_結合前面的寫檔、讀檔, 還有上週的 many TRT 範例, 我們想要把 float angle[20] 全部關節的座標都存檔存起來哦, 使用 void myWrite()函式, 裡面會適時 fopen()開檔, 再用 for迴圈把20個關節都印到檔案裡面
+
+把上週你寫的 week13_rect_many_TRT拿來繼續寫
+1. File-New-Project, GLUT專案, week14_TRT_angle_write
+2. 貼上上週的最後程式
+3. 要開檔、寫檔, 最後關檔
+
+```cpp
+///week14_TRT_angle_write 修改自 week13_rect_many_TRT
+#include <GL/glut.h>
+#include <stdio.h> ///為了 printf, fprintf, fopen, fclose ..
+float angle[20], oldX=0;
+int angleID=0;///0:第0個關節, 1:第1個關節, 2:第2個關節
+FILE * fout = NULL;
+void myWrite(){
+    if(fout==NULL) fout = fopen("file.txt", "w+");
+    for(int i=0; i<20; i++){
+        fprintf(fout, "%.2f ", angle[i] );
+    }
+}
+void keyboard( unsigned char key, int x, int y){
+    if( key=='0' ) angleID=0;///預設是這一個
+    if( key=='1' ) angleID=1;
+    if( key=='2' ) angleID=2;
+    if( key=='3' ) angleID=3;
+}///用keyboard的按鍵,來決定等一下 motion()裡要改的 angle[i] 是哪一個
+void mouse(int button, int state, int x, int y){///mouse按下去
+    oldX = x;
+}
+void motion(int x, int y){
+    angle[angleID] += (x-oldX);
+    myWrite();
+    oldX = x;
+    glutPostRedisplay();
+}
+```
+
+## step02-1
+step02-1_新增專案week14_TRT_angle_write_and_read 要再把寫檔的結果,再重新讀進來、按下r鍵可以重播
+
+我們想要讀進來!!!
+要做一些修改
+1. File-New-Project, GLUT專案, week14_TRT_angle_write_and_read
+2. 要新加 `FILE * fin = NULL;`空指標
+3. 寫自己的 void myRead() 裡面先將 fout 適時關起來, 再把 fin 開起來, 讀入20個關節, 並更新畫面
+4. keyboard()函式中, 加入 if(key=='r') myRead(); 去呼叫myRead()並更新畫面
+5. 所以在執行時, 先用 mouse motion + keyboard 做一些動作, 之後再一直按著'r' 來一行一行讀入剛剛錄下來的動作
+
+```cpp
+FILE * fout = NULL, * fin = NULL;
+void myWrite(){
+    if(fout==NULL) fout = fopen("file.txt", "w+");
+    for(int i=0; i<20; i++){
+         printf(      "%.2f ", angle[i] );
+        fprintf(fout, "%.2f ", angle[i] );
+    }
+    printf("\n");
+    fprintf(fout, "\n");///少了fclose,因為不想要才印一行,就結束。想寫多行一些
+}
+void myRead(){
+    if(fout!=NULL) { fclose(fout); fout=NULL; }///還在讀的檔案要關掉
+    if(fin==NULL) fin = fopen("file.txt", "r");
+    for(int i=0; i<20; i++){
+        fscanf(fin, "%f", &angle[i] );
+    }
+    glutPostRedisplay();///重畫畫面!!
+}
+void keyboard( unsigned char key, int x, int y){
+    if( key=='r' ){
+        myRead();
+    }
+    if( key=='0' ) angleID=0;///預設是這一個
+    if( key=='1' ) angleID=1;
+    if( key=='2' ) angleID=2;
+    if( key=='3' ) angleID=3;
+}
+```
+
+## step02-2
+step02-2_修正我們的專案目錄。原本GLUT專案因為freeglut.dll在很奇怪的freeglut的bin目錄中,所以那裡被設成工作目錄working_dir, 但是那真的是很奇怪的位置, 所以我們利用 Notepad++開啟 .cbp專案檔, 把 wroking_dir右邊的值改成小數點,代表專案所在目錄。最後把freeglut.dll也放一份到你的專案中,便完成了這個移植的任務
+
+修正我們的工作目錄
+1. 現在工作目錄很怪 C:\Users\user\Desktop\freeglut\bin 
+2. 我們希望它在 我們的程式碼的那個目錄 week14_TRT_angle_write 之類的
+3. 所以我們要修改專案(.cbp CodeBlocks Project) 的工作目錄!!!!
+4. 可以利用 Notepad++ 來修改 .cbp 檔 (TODO: 裝 Notepad++)
+5. 看 .cbp 檔裡, 有 working_dir="." 改成(雙引號裡面加小數點), 存檔
+6. 手動把 C:\Users\user\Desktop\freeglut\bin 裡的 freeglut.dll 複製到你的專案目錄中 week14_TRT_angle_write_and_read
+7. CodeBlocks 裡 Reload Project 就可以改變工作目錄囉!!
+
+
+## step03-1
+step03-1_講解timer的機制, 老師每天早上起床,鬧鐘就一直響, 起床設好下個鬧鐘後,再安心回去睡。glutTimerFunc(300, timer, 0) 只會播第1個鬧鐘。所以timer()裡要再設定下一個鬧鐘,這樣就會有源源不絕的鬧鐘了
+
+之前有用過 glutIdleFunc(display) 速度很怪(快慢不一樣)
+所以,有一種鬧鐘/廚房計時器 timer 會定時把你叫起來做事(像早上起床設很多鬧鐘)
+
+1. File-New-Project, GLUT專妹, week14_timer
+2. 設定timer: glutTimerFunc( 時間, timer, 參數t )
+3. void timer(int t) 函式
+
+```cpp
+#include <GL/glut.h>
+#include <stdio.h>
+void timer(int t){///t的單位是ms
+    ///1000代表1秒, 1500代表1.5秒
+    printf("鬧鐘%d, 我起床了\n", t);///起床做事情
+
+    printf("設定下一個鬧鐘\n");
+    glutTimerFunc( 2000, timer, t+1);///2秒後
+    //printf("設好鬧鐘,再回去睡\n");
+}
+void display()
+{
+
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week14 timer");
+
+    glutTimerFunc(3000, timer, 0);///3秒後,叫timer()
+    glutDisplayFunc(display);
+    glutMainLoop();
+}
+```
+
+## step03-2
+step03-2_有了timer()會固定時間呼叫到, 我們增加 PlaySound(檔名,NULL,SND_ASYNC);來播放do.wav檔案
+
+```cpp
+void timer(int t){///t的單位是ms
+    ///1000代表1秒, 1500代表1.5秒
+    printf("鬧鐘%d, 我起床了\n", t);///起床做事情
+    PlaySound("do.wav", NULL, SND_ASYNC);
+    printf("設定下一個鬧鐘\n");
+    glutTimerFunc( 2000, timer, t+1);///2秒後
+}
+```
