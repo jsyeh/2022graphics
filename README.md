@@ -2392,3 +2392,183 @@ void timer(int t){///t的單位是ms
     glutTimerFunc( 2000, timer, t+1);///2秒後
 }
 ```
+
+# Week15
+電腦圖學 Week15 2022-05-30
+1. 播聲音、播MP3
+2. 播放動畫、內插
+3. 機器人擺動作、跳舞
+
+## step01-1
+上週教的聲音 PlaySound(檔名, NULL, SND_ASYNC);
+今天要稍微講解 參數, 對應的 lib檔 專案檔
+
+1. #include <windows.h> 或用上週教的 #include <mmsystem.h>
+2. PlaySounc("檔名.wav", NULL, SND_SYNC);
+3. Setting-Compiler Setting, Linker Setting 加上 winmm
+
+```cpp
+///Week15-1_PlaySound.cpp
+///#include <mmsystem.h>///上週教
+#include <windows.h>///另一種寫法,結果一樣
+int main()
+{           ///先放不存在的檔     上週教 SND_ASYNC
+    ///PlaySound("badbadbad.wav", NULL, SND_SYNC );
+    PlaySound("07042111.wav", NULL, SND_SYNC );
+}///Compile成功,      但是 link 失敗!!
+/// .c .cpp =compile=> .o  =link=> .exe
+///Setting-Compiler Setting 的 Linker Setting 加 winmm
+```
+
+
+## step01-2
+比較差別 SND_ASYNC vs. SND_SYNC
+
+```cpp
+///Week15-2 SND_SYNC要等待同步 vs.
+///SND_ASYNC 不用等待、不同步
+#include <windows.h>
+#include <stdio.h> ///printf()
+int main()
+{
+    printf("現在在PlaySound()前\n");
+    PlaySound("07042111.wav", NULL, SND_ASYNC);
+    printf("現在在PlaySound()後\n");
+    int N;
+    scanf("%d", &N);///等你輸入數字
+}
+```
+
+
+## step01-3
+比較後發現 
+1. 下載 Teams 老師放的 CMP3_MCI.h 
+2. #include "CMP3_MCI.h"
+3. 宣告 CMP3_MCI mp3 這個物件變數
+4. mp3.Load("檔名.mp3"); mp3.Play(); 播放
+
+以上都是簡單的 .cpp 檔, 不需要開 GLUT專案
+(GLUT專案開也沒關係, 不開也沒關係)
+
+```cpp
+///Week15-3 希望能播放 mp3
+///MP3檔案小 vs. WAV 檔案大 PlaySound()
+///有壓縮/難     原始資料
+#include "CMP3_MCI.h" ///下載,放在同目錄
+#include <stdio.h>
+CMP3_MCI mp3;
+int main()
+{
+    mp3.Load("07042111.mp3");
+    mp3.Play();
+    printf("現在正在播放羊的聲音\n");
+    int N;///找一個人卡住,不要結束
+    scanf("%d", &N);
+}
+```
+
+## step02-1
+接續上週的程式 week14_angles_TRT_write_and_read 要能擺動作,擺好動作 再存一行動作即可
+
+1. File-New-Project, GLUT專案 week15_angles_TRT_again
+2. 從你的 github 找到對應程式,copy, 貼來 main.cpp
+3. myWrite()可以寫一行
+4. 原本 motion()裡一直呼叫 myWrite(), 把它刪掉
+5. keyboard() 裡 if(key=='s') myWrite();//Save
+6. 執行時, motion不會存檔, 按下 's' 才會存1行動作
+7. 按下 'r' 會讀一行!!!
+
+```cpp
+void keyboard( unsigned char key, int x, int y){
+    if( key=='r' ) myRead();
+    if( key=='s' ) myWrite();///save
+    if( key=='0' ) angleID=0;///預設是這一個
+    if( key=='1' ) angleID=1;
+    if( key=='2' ) angleID=2;
+    if( key=='3' ) angleID=3;
+}///用keyboard的按鍵,來決定等一下 motion()裡要改的 angle[i] 是哪一個
+void mouse(int button, int state, int x, int y){///mouse按下去
+    oldX = x;
+}
+void motion(int x, int y){
+    angle[angleID] += (x-oldX);
+    ///myWrite();///沒有必要一直寫檔啦
+    oldX = x;
+    glutPostRedisplay();
+}
+```
+
+## step02-2
+剛剛的程式, 會在工作執行目錄中, 產生 file.txt
+也就是我們按下 's' 存1行動作, 按下4次 's' 就會存4行動作
+
+這時候, 如果在記事本中, 把 file.txt 裡的 4行變成 40行, 那我們之後按下 'r' 讀動作時, 便會看到我們的動作竟然就變多了。
+
+今天可能來不及教 interpolation 內插動作。因為希望今天能開始第4個作業, 也就是"讓你的機器人可以擺動作"
+
+
+
+## step03-1
+最後一節課, 與本週的作業相關。老師想示範 如何把機器人組起來, 並且可以擺動作, 以便存檔、編輯後, 完成動畫播放。
+
+1. File-New-Project, GLUT專案 week15_homework_gundam_parts
+2. glm.cpp glm.h 和 freeglut.dll 及 gundam 的 data資料夾,都放在你程式的目錄
+3. 左邊的專案,右鍵 Add ... 把 glm.cpp 加進去
+4. 程式碼加進去 前 #include "glm.h" 及 GLMmodel * pmodel = NULL;
+5. 新的display()裡, 加入模型的程式
+6. 小心, working_dir 工作在荒山野嶺, 要用 Notepad++ 把 .cbp 裡面改成 working_dir = "." 存檔, Reload
+7. 再執行,就可以看到gundam了
+
+```cpp
+///week15_homework_gundam_parts
+///要把 Gundam做出來, 需要 glm.h glm.cpp 及 gundam 5個檔案
+#include <GL/glut.h>
+#include <stdio.h> ///為了 printf, fprintf, fopen, fclose ..
+#include "glm.h"
+GLMmodel * pmodel = NULL;
+GLMmodel * head = NULL;
+GLMmodel * body = NULL;
+GLMmodel * bot = NULL;
+GLMmodel * arm1 = NULL;
+GLMmodel * arm2 = NULL;
+GLMmodel * hand1 = NULL;
+GLMmodel * hand2 = NULL;
+```
+
+再改一下如何讀檔
+
+```cpp
+GLMmodel * myReadOne(char * filename){
+    GLMmodel * one = NULL;
+    if( one == NULL ){
+        one = glmReadOBJ(filename);
+        glmUnitize(one);
+        glmFacetNormals(one);
+        glmVertexNormals(one, 90);
+    }
+    return one;
+}
+void display()///準備最新的 display(), 有把每一塊都讀進來
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    if(head==NULL) head=myReadOne("data/head.obj");
+
+    glmDraw(head, GLM_SMOOTH);
+
+    glutSwapBuffers();
+}
+void displayNotParts()///準備新的 display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    if( pmodel == NULL ){
+        pmodel = glmReadOBJ("data/Gundam.obj");
+        glmUnitize(pmodel);
+        glmFacetNormals(pmodel);
+        glmVertexNormals(pmodel, 90);
+    }
+    glmDraw(pmodel, GLM_SMOOTH);
+
+    glutSwapBuffers();
+}
+```
+
