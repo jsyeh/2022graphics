@@ -2572,3 +2572,165 @@ void displayNotParts()///準備新的 display()
 }
 ```
 
+# Week16
+
+## step01-0
+上課前,有同學問上週最後一節課 1小時,做的任務(與回家作業相關),老師逐步示範
+week16_review_model_TRT_angles
+
+1. 3D Model 讀入
+2. 調整位置!!! TRT 最下面的T
+3. 再旋轉
+3. 再掛上去
+
+## step01-1
+利用Excel來學習如何進行alpha內插,使用的公式是 alpha乘新的+(1-alpha)乘舊的
+Excel 學習內插
+1. Excel or Google Spreadsheet
+2. t: 0.0 .... 1.0
+3. alpha: 0.0 ... 1.0
+4. angle = 13 ... 90
+5. 內插公式 alpha*新的 + (1-alpha)*舊的
+
+## step01-2
+從上週 week15_angles_TRT_again改成 week16_interpolation 想要練習內插。作法是先把 myRead()改寫, 再新增 myInterpolate()函式,進行內插, 最後用 'p' 鍵來逐步呼叫 myInterpolate()
+
+```cpp
+float NewAngle[20], OldAngle[20];
+void myRead(){
+    if(fout!=NULL) { fclose(fout); fout=NULL; }///還在讀的檔案要關掉
+    if(fin==NULL) fin = fopen("file.txt", "r");
+    for(int i=0; i<20; i++){
+        OldAngle[i] = NewAngle[i];
+        fscanf(fin, "%f", &NewAngle[i] );
+        ///fscanf(fin, "%f", &angle[i] );
+    }
+    glutPostRedisplay();///重畫畫面!!
+}
+void myInterpolate(float alpha){
+    for(int i=0; i<20; i++){
+        angle[i] = alpha * NewAngle[i] + (1-alpha) * OldAngle[i];
+        printf("%.2f ", angle[i] );
+    }
+    printf("\n");
+    glutPostRedisplay();
+}
+float alpha=0;
+void keyboard( unsigned char key, int x, int y){
+    if( key=='p' ){
+        myInterpolate(alpha);
+        alpha = (alpha+0.01);
+        if(alpha>1) alpha = alpha-1;
+    }
+    if( key=='r' ) myRead();
+    if( key=='s' ) myWrite();///save
+    if( key=='0' ) angleID=0;///預設是這一個
+    if( key=='1' ) angleID=1;
+    if( key=='2' ) angleID=2;
+    if( key=='3' ) angleID=3;
+}///用keyboard的按鍵,來決定等一下 motion()裡要改的 angle[i] 是哪一個
+```
+## step02-1
+前一個範例要一直接'p'不太好,這裡改用 timer 自動做內插
+1. 先把程式存4個動作, 把程式關掉
+2. 利用 glutTimerFunc(0, timer, 0); 開始播放
+3. 在 if(key=='p') 進行play
+4. 先 myRead(); 再註冊 timer
+5. void timer(t) 裡面做的事有:
+6. 依照時間,算出適當的 alpha
+7. 再由 alpha值傳給myInterpolate(alpha)來內插
+
+```cpp
+void myInterpolate(float alpha){
+    for(int i=0; i<20; i++){
+        angle[i] = alpha * NewAngle[i] + (1-alpha) * OldAngle[i];
+        printf("%.2f ", angle[i] );
+    }
+    printf("\n");
+    glutPostRedisplay();
+}
+///float alpha=0;
+void timer(int t){
+    float alpha = (t%100)/100.0; ///算出alpha
+    if(t%100==0) myRead();///遇到100整除時,做新舊交接
+    myInterpolate(alpha);
+    glutTimerFunc(10, timer, t+1);
+}
+void keyboard( unsigned char key, int x, int y){
+    if( key=='p' ){///play
+        myRead();///先讀1行
+        glutTimerFunc(0, timer, 0);///馬上開始播動畫
+        ///myInterpolate(alpha);
+        ///alpha = (alpha+0.01);
+        ///if(alpha>1) alpha = alpha-1;
+    }
+    if( key=='r' ) myRead();
+    if( key=='s' ) myWrite();///save
+    if( key=='0' ) angleID=0;///預設是這一個
+    if( key=='1' ) angleID=1;
+    if( key=='2' ) angleID=2;
+    if( key=='3' ) angleID=3;
+}
+```
+## step02-2
+使用timer內插時,如果時間切得不夠細,會讓內插的動作卡卡的。所以可以修改 t%100 讓它在動作間切100格更細, 動作會更順暢。記得 timer()呼叫的時間也要更短,才不會太慢
+
+```cpp
+void timer(int t){
+    float alpha = (t%100)/100.0; ///算出alpha
+    if(t%100==0) myRead();///遇到100整除時,做新舊交接
+    myInterpolate(alpha);
+    glutTimerFunc(10, timer, t+1);
+}
+```
+
+## step03-1
+最後一節課,介紹課本 Projection.exe 這個範例,裡面有 gluPerspective()及gluLookAt()這兩個函式。先介紹gluLookAt()的參數的,eye位置, center位置, up向量等, 再介紹gluPerspective()裡面 aspect ratio的意思。最後拿CodeBlocks的GLUT範例的glutReshapeFunc()來講解,並在motion()中持續修改camera的位置
+1. File-New-Project, GLUT專案, week16_camera_lookat
+2. 備份GLUT專案範例的 resize()函式, 改成 void reshape(int w, int h)
+3. 我們10行 GLUT範例中, 加入 glutReshapeFunc(reshape) 讓視窗改變大小時, 會做對應修正
+4. reshape()裡面,改用課本 gluPerspective() 的作法
+5. 最後利用 motion() 在 mouse motion時, 移動 camera的位置
+
+```cpp
+#include <GL/glut.h>
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glutSolidTeapot(2);///大茶壼
+    glutSwapBuffers();
+}
+void motion(int x, int y)
+{
+    glMatrixMode(GL_MODELVIEW);///3D經過轉換到你最後的攝影機
+    glLoadIdentity();
+    gluLookAt( (x-150)/15.0, (y-150)/15.0, 3, ///eye
+              0, 0, 0, ///center
+              0, 1, 0);///up
+    glutPostRedisplay();
+}
+void reshape(int w, int h)
+{    const float ar = (float) w / (float) h;
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);///投影,把3D投射到2D畫面
+    glLoadIdentity();
+    gluPerspective(60, ar, 0.1, 100);
+
+    glMatrixMode(GL_MODELVIEW);///3D經過轉換到你最後的攝影機
+    glLoadIdentity() ;
+    gluLookAt( 0, 0, 3,   0, 0, 0,     0, 1, 0);
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week16 camera lookat");
+
+    glutReshapeFunc(reshape);
+    glutDisplayFunc(display);
+    glutMotionFunc(motion);
+
+    glutMainLoop();
+}
+```
+
